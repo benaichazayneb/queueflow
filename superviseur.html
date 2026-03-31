@@ -1,0 +1,882 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>QueueFlow — Tableau de Bord Superviseur</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap"
+    rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    :root {
+      --navy: #0B1629;
+      --navy-mid: #112240;
+      --navy-light: #1A3560;
+      --navy-card: #0F1E3A;
+      --orange: #FF6B2B;
+      --orange-glow: #FF6B2B33;
+      --green: #22D47B;
+      --green-glow: #22D47B33;
+      --blue: #4A9EFF;
+      --blue-glow: #4A9EFF33;
+      --red: #FF4D6A;
+      --white: #F0F4FF;
+      --muted: #6B84B0;
+      --border: #1E3A6E;
+    }
+
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Sora', sans-serif;
+      background: var(--navy);
+      color: var(--white);
+      min-height: 100vh;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      background:
+        radial-gradient(ellipse 55% 40% at 85% 8%, #4A9EFF12 0%, transparent 60%),
+        radial-gradient(ellipse 45% 35% at 8% 85%, #22D47B10 0%, transparent 55%),
+        radial-gradient(ellipse 50% 30% at 50% 50%, #FF6B2B08 0%, transparent 60%);
+      pointer-events: none;
+    }
+
+    /* MAIN CONTENT */
+    .main-content {
+      position: relative;
+      z-index: 1;
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 1.5rem;
+    }
+
+    /* HEADER WITH BRAND */
+    .app-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 2rem;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .brand-container {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .brand-icon {
+      width: 42px;
+      height: 42px;
+      background: var(--orange);
+      border-radius: 12px;
+      display: grid;
+      place-items: center;
+      color: #fff;
+      font-size: 1.2rem;
+    }
+
+    .brand-name {
+      font-size: 1.5rem;
+      font-weight: 800;
+      color: var(--white);
+      letter-spacing: -0.5px;
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    /* TOPBAR */
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 2rem;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .page-title {
+      font-size: 1.6rem;
+      font-weight: 800;
+      color: var(--white);
+    }
+
+    .page-sub {
+      font-size: .82rem;
+      color: var(--muted);
+      margin-top: .2rem;
+    }
+
+    .live-badge {
+      display: flex;
+      align-items: center;
+      gap: .5rem;
+      background: var(--green-glow);
+      border: 1px solid var(--green);
+      border-radius: 20px;
+      padding: .3rem .9rem;
+      font-size: .75rem;
+      font-weight: 700;
+      color: var(--green);
+    }
+
+    .live-dot {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--green);
+      animation: pg 1.5s ease-in-out infinite;
+    }
+
+    @keyframes pg {
+
+      0%,
+      100% {
+        box-shadow: 0 0 0 0 var(--green-glow)
+      }
+
+      50% {
+        box-shadow: 0 0 0 6px transparent
+      }
+    }
+
+    /* USER CHIP */
+    .user-chip {
+      display: flex;
+      align-items: center;
+      gap: .65rem;
+      padding: .4rem .8rem .4rem .6rem;
+      border-radius: 40px;
+      background: var(--navy-mid);
+      border: 1px solid var(--border);
+    }
+
+    .user-avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: var(--navy-light);
+      border: 2px solid var(--orange);
+      display: grid;
+      place-items: center;
+      font-size: .85rem;
+    }
+
+    .user-info {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .user-name {
+      font-size: .8rem;
+      font-weight: 700;
+      color: var(--white);
+    }
+
+    .user-role {
+      font-size: .65rem;
+      color: var(--muted);
+    }
+
+    /* KPI CARDS */
+    .kpi-card {
+      background: var(--navy-card);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 1.5rem;
+      position: relative;
+      overflow: hidden;
+      transition: border-color .3s;
+    }
+
+    .kpi-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      display: grid;
+      place-items: center;
+      font-size: 1.2rem;
+      margin-bottom: 1rem;
+      flex-shrink: 0;
+    }
+
+    .icon-orange {
+      background: var(--orange-glow);
+      color: var(--orange);
+    }
+
+    .icon-green {
+      background: var(--green-glow);
+      color: var(--green);
+    }
+
+    .icon-blue {
+      background: var(--blue-glow);
+      color: var(--blue);
+    }
+
+    .icon-red {
+      background: #FF4D6A33;
+      color: var(--red);
+    }
+
+    .kpi-val {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 2.2rem;
+      font-weight: 700;
+      color: var(--white);
+      line-height: 1;
+    }
+
+    .kpi-lbl {
+      font-size: .75rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: .07em;
+      margin-top: .3rem;
+    }
+
+    .kpi-trend {
+      font-size: .72rem;
+      margin-top: .4rem;
+      display: flex;
+      align-items: center;
+      gap: .2rem;
+    }
+
+    .trend-up {
+      color: var(--green);
+    }
+
+    .trend-dn {
+      color: var(--red);
+    }
+
+    .trend-nt {
+      color: var(--muted);
+    }
+
+    .kpi-bar {
+      height: 4px;
+      background: var(--border);
+      border-radius: 4px;
+      margin-top: 1rem;
+      overflow: hidden;
+    }
+
+    .kpi-bar-fill {
+      height: 100%;
+      border-radius: 4px;
+      transition: width 1.2s ease;
+    }
+
+    /* SECTION HEADERS */
+    .sec-eye {
+      font-size: .68rem;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      color: var(--orange);
+      font-weight: 700;
+      margin-bottom: .3rem;
+    }
+
+    .sec-title {
+      font-size: 1.1rem;
+      font-weight: 800;
+      color: var(--white);
+      margin-bottom: 1.2rem;
+    }
+
+    /* CHART CARD */
+    .chart-card {
+      background: var(--navy-card);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 1.75rem;
+    }
+
+    /* SERVICE TABLE */
+    .svc-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .svc-table th {
+      font-size: .63rem;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      color: var(--muted);
+      padding: .5rem .75rem;
+      border-bottom: 1px solid var(--border);
+      text-align: left;
+    }
+
+    .svc-table td {
+      padding: .65rem .75rem;
+      font-size: .82rem;
+      border-bottom: 1px solid #1E3A6E44;
+      vertical-align: middle;
+    }
+
+    .svc-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    .svc-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      margin-right: .5rem;
+      display: inline-block;
+    }
+
+    .load-bar {
+      height: 6px;
+      background: var(--border);
+      border-radius: 4px;
+      overflow: hidden;
+      min-width: 80px;
+    }
+
+    .load-fill {
+      height: 100%;
+      border-radius: 4px;
+    }
+
+    .fill-green {
+      background: var(--green);
+    }
+
+    .fill-orange {
+      background: var(--orange);
+    }
+
+    .fill-red {
+      background: var(--red);
+    }
+
+    .fill-blue {
+      background: var(--blue);
+    }
+
+    .status-pill {
+      font-size: .65rem;
+      font-weight: 700;
+      padding: .2rem .65rem;
+      border-radius: 20px;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+    }
+
+    .pill-active {
+      background: var(--green-glow);
+      color: var(--green);
+    }
+
+    .pill-busy {
+      background: var(--orange-glow);
+      color: var(--orange);
+    }
+
+    .pill-pause {
+      background: var(--border);
+      color: var(--muted);
+    }
+
+    /* AGENT STATUS */
+    .agent-row {
+      display: flex;
+      align-items: center;
+      gap: .75rem;
+      background: var(--navy-mid);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: .75rem 1rem;
+      margin-bottom: .5rem;
+    }
+
+    .agent-ava {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: var(--navy-light);
+      border: 2px solid var(--border);
+      display: grid;
+      place-items: center;
+      font-size: .9rem;
+      flex-shrink: 0;
+    }
+
+    .agent-ava.busy {
+      border-color: var(--orange);
+    }
+
+    .agent-ava.active {
+      border-color: var(--green);
+    }
+
+    .agent-nm {
+      font-size: .85rem;
+      font-weight: 700;
+      color: var(--white);
+    }
+
+    .agent-ticket {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: .75rem;
+      color: var(--muted);
+    }
+
+    .agent-count {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: .8rem;
+      color: var(--green);
+      margin-left: auto;
+    }
+
+    /* ALERTS */
+    .alert-item {
+      display: flex;
+      align-items: flex-start;
+      gap: .75rem;
+      background: var(--navy-mid);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: .9rem 1rem;
+      margin-bottom: .5rem;
+      border-left: 3px solid var(--orange);
+    }
+
+    .alert-item.warn {
+      border-left-color: var(--red);
+    }
+
+    .alert-item.info {
+      border-left-color: var(--blue);
+    }
+
+    .alert-icon {
+      font-size: 1.1rem;
+      margin-top: .1rem;
+    }
+
+    .alert-title {
+      font-size: .82rem;
+      font-weight: 700;
+      color: var(--white);
+    }
+
+    .alert-desc {
+      font-size: .72rem;
+      color: var(--muted);
+      margin-top: .1rem;
+    }
+
+    .alert-time {
+      font-size: .65rem;
+      color: var(--muted);
+      margin-left: auto;
+      flex-shrink: 0;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .main-content {
+        padding: 1rem;
+      }
+
+      .app-header {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .topbar {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .header-actions {
+        width: 100%;
+        justify-content: space-between;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- MAIN CONTENT -->
+  <div class="main-content">
+
+    <!-- HEADER WITH BRAND -->
+    <div class="app-header">
+      <div class="brand-container">
+        <div class="brand-icon"><i class="bi bi-layers-fill"></i></div>
+        <span class="brand-name">QueueFlow</span>
+      </div>
+      <div class="header-actions">
+        <div class="live-badge"><span class="live-dot"></span> Temps réel</div>
+        <div class="user-chip">
+          <div class="user-avatar"><i class="bi bi-person-fill"></i></div>
+          <div class="user-info">
+            <div class="user-name">Thomas Martin</div>
+            <div class="user-role">Superviseur</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TOPBAR -->
+    <div class="topbar">
+      <div>
+        <h1 class="page-title">Tableau de Bord</h1>
+        <p class="page-sub">Vue globale · Aujourd'hui, <span id="dateNow"></span></p>
+      </div>
+      <div>
+        <select
+          style="background:var(--navy-card);border:1px solid var(--border);color:var(--muted);border-radius:10px;padding:.4rem .8rem;font-family:'Sora',sans-serif;font-size:.78rem;outline:none;">
+          <option>Tous les services</option>
+          <option>Accueil Général</option>
+          <option>Scolarité</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- KPI ROW -->
+    <div class="row g-3 mb-4">
+      <div class="col-6 col-xl-3">
+        <div class="kpi-card">
+          <div class="kpi-icon icon-orange"><i class="bi bi-ticket-perforated-fill"></i></div>
+          <div class="kpi-val" id="kpiTotal">147</div>
+          <div class="kpi-lbl">Tickets aujourd'hui</div>
+          <div class="kpi-trend trend-up"><i class="bi bi-arrow-up-short"></i>+18% vs hier</div>
+          <div class="kpi-bar">
+            <div class="kpi-bar-fill" style="width:74%;background:var(--orange)"></div>
+          </div>
+        </div>
+      </div>
+      <div class="col-6 col-xl-3">
+        <div class="kpi-card">
+          <div class="kpi-icon icon-green"><i class="bi bi-check-circle-fill"></i></div>
+          <div class="kpi-val">89%</div>
+          <div class="kpi-lbl">Taux de traitement</div>
+          <div class="kpi-trend trend-up"><i class="bi bi-arrow-up-short"></i>Objectif: 85%</div>
+          <div class="kpi-bar">
+            <div class="kpi-bar-fill" style="width:89%;background:var(--green)"></div>
+          </div>
+        </div>
+      </div>
+      <div class="col-6 col-xl-3">
+        <div class="kpi-card">
+          <div class="kpi-icon icon-blue"><i class="bi bi-stopwatch-fill"></i></div>
+          <div class="kpi-val">8<span style="font-size:1.2rem">min</span></div>
+          <div class="kpi-lbl">Temps moyen</div>
+          <div class="kpi-trend trend-up"><i class="bi bi-arrow-down-short"></i>-2 min vs objectif</div>
+          <div class="kpi-bar">
+            <div class="kpi-bar-fill" style="width:55%;background:var(--blue)"></div>
+          </div>
+        </div>
+      </div>
+      <div class="col-6 col-xl-3">
+        <div class="kpi-card">
+          <div class="kpi-icon icon-red"><i class="bi bi-people-fill"></i></div>
+          <div class="kpi-val" id="kpiWaiting">34</div>
+          <div class="kpi-lbl">En attente maintenant</div>
+          <div class="kpi-trend trend-dn"><i class="bi bi-arrow-up-short"></i>Charge élevée</div>
+          <div class="kpi-bar">
+            <div class="kpi-bar-fill" style="width:68%;background:var(--red)"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CHARTS ROW -->
+    <div class="row g-4 mb-4">
+      <div class="col-lg-8">
+        <div class="chart-card">
+          <div class="sec-eye">Tendance horaire</div>
+          <div class="sec-title">Tickets par heure</div>
+          <canvas id="chartHourly" height="100"></canvas>
+        </div>
+      </div>
+      <div class="col-lg-4">
+        <div class="chart-card h-100">
+          <div class="sec-eye">Répartition</div>
+          <div class="sec-title">Par service</div>
+          <canvas id="chartDoughnut" height="200"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- SERVICES + AGENTS + ALERTS -->
+    <div class="row g-4">
+      <!-- SERVICES -->
+      <div class="col-lg-5">
+        <div class="chart-card">
+          <div class="sec-eye">Charge actuelle</div>
+          <div class="sec-title">État des services</div>
+          <div style="overflow-x:auto">
+            <table class="svc-table">
+              <thead>
+                <tr>
+                  <th>Service</th>
+                  <th>En attente</th>
+                  <th>Charge</th>
+                  <th>Statut</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><span class="svc-dot" style="background:var(--orange)"></span>Accueil Général</td>
+                  <td style="font-family:'JetBrains Mono',monospace;font-weight:700">12</td>
+                  <td>
+                    <div class="load-bar" style="width:90px">
+                      <div class="load-fill fill-orange" style="width:72%"></div>
+                    </div>
+                  </td>
+                  <td><span class="status-pill pill-busy">Chargé</span></td>
+                </tr>
+                <tr>
+                  <td><span class="svc-dot" style="background:var(--green)"></span>Scolarité</td>
+                  <td style="font-family:'JetBrains Mono',monospace;font-weight:700">5</td>
+                  <td>
+                    <div class="load-bar" style="width:90px">
+                      <div class="load-fill fill-green" style="width:40%"></div>
+                    </div>
+                  </td>
+                  <td><span class="status-pill pill-active">Normal</span></td>
+                </tr>
+                <tr>
+                  <td><span class="svc-dot" style="background:var(--blue)"></span>Comptabilité</td>
+                  <td style="font-family:'JetBrains Mono',monospace;font-weight:700">8</td>
+                  <td>
+                    <div class="load-bar" style="width:90px">
+                      <div class="load-fill fill-blue" style="width:60%"></div>
+                    </div>
+                  </td>
+                  <td><span class="status-pill pill-active">Normal</span></td>
+                </tr>
+                <tr>
+                  <td><span class="svc-dot" style="background:var(--red)"></span>Médecine</td>
+                  <td style="font-family:'JetBrains Mono',monospace;font-weight:700">16</td>
+                  <td>
+                    <div class="load-bar" style="width:90px">
+                      <div class="load-fill fill-red" style="width:90%"></div>
+                    </div>
+                  </td>
+                  <td><span class="status-pill pill-busy" style="background:#FF4D6A33;color:var(--red)">Critique</span>
+                  </td>
+                </tr>
+                <tr>
+                  <td><span class="svc-dot" style="background:var(--muted)"></span>Technique</td>
+                  <td style="font-family:'JetBrains Mono',monospace;font-weight:700;color:var(--muted)">—</td>
+                  <td>
+                    <div class="load-bar" style="width:90px">
+                      <div class="load-fill fill-green" style="width:5%"></div>
+                    </div>
+                  </td>
+                  <td><span class="status-pill pill-pause">Pause</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- AGENTS -->
+      <div class="col-lg-4">
+        <div class="chart-card">
+          <div class="sec-eye">Personnel</div>
+          <div class="sec-title">Agents actifs</div>
+          <div class="agent-row">
+            <div class="agent-ava busy">👤</div>
+            <div>
+              <div class="agent-nm">Sami K. — Guichet 3</div>
+              <div class="agent-ticket">→ A042 · Accueil Général</div>
+            </div>
+            <div class="agent-count">24 ✓</div>
+          </div>
+          <div class="agent-row">
+            <div class="agent-ava active">👤</div>
+            <div>
+              <div class="agent-nm">Nadia B. — Guichet 1</div>
+              <div class="agent-ticket">→ S018 · Scolarité</div>
+            </div>
+            <div class="agent-count">18 ✓</div>
+          </div>
+          <div class="agent-row">
+            <div class="agent-ava busy">👤</div>
+            <div>
+              <div class="agent-nm">Omar T. — Guichet 2</div>
+              <div class="agent-ticket">→ M031 · Médecine</div>
+            </div>
+            <div class="agent-count">31 ✓</div>
+          </div>
+          <div class="agent-row" style="opacity:.5">
+            <div class="agent-ava">👤</div>
+            <div>
+              <div class="agent-nm">Rania F. — Guichet 4</div>
+              <div class="agent-ticket" style="color:var(--muted)">En pause</div>
+            </div>
+            <div class="agent-count" style="color:var(--muted)">11 ✓</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ALERTS -->
+      <div class="col-lg-3">
+        <div class="chart-card">
+          <div class="sec-eye">Notifications</div>
+          <div class="sec-title">Alertes actives</div>
+          <div class="alert-item warn">
+            <div class="alert-icon" style="color:var(--red)"><i class="bi bi-exclamation-triangle-fill"></i></div>
+            <div>
+              <div class="alert-title">Médecine surchargé</div>
+              <div class="alert-desc">16 tickets · attente > 35 min</div>
+            </div>
+            <div class="alert-time">10:32</div>
+          </div>
+          <div class="alert-item">
+            <div class="alert-icon" style="color:var(--orange)"><i class="bi bi-clock-fill"></i></div>
+            <div>
+              <div class="alert-title">Pic de charge prévu</div>
+              <div class="alert-desc">11h–12h · renforcer équipe</div>
+            </div>
+            <div class="alert-time">10:15</div>
+          </div>
+          <div class="alert-item info">
+            <div class="alert-icon" style="color:var(--blue)"><i class="bi bi-info-circle-fill"></i></div>
+            <div>
+              <div class="alert-title">Guichet 4 en pause</div>
+              <div class="alert-desc">Rania F. — reprise 11h00</div>
+            </div>
+            <div class="alert-time">10:00</div>
+          </div>
+          <div class="alert-item info" style="border-left-color:var(--green)">
+            <div class="alert-icon" style="color:var(--green)"><i class="bi bi-check-circle-fill"></i></div>
+            <div>
+              <div class="alert-title">Objectif traitement atteint</div>
+              <div class="alert-desc">Taux: 89% > objectif 85%</div>
+            </div>
+            <div class="alert-time">09:45</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    // Date
+    const d = new Date();
+    const dateElement = document.getElementById('dateNow');
+    if (dateElement) {
+      dateElement.textContent = d.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
+    }
+
+    // HOURLY CHART
+    const ctxH = document.getElementById('chartHourly').getContext('2d');
+    new Chart(ctxH, {
+      type: 'bar',
+      data: {
+        labels: ['8h', '9h', '10h', '11h', '12h', '13h', '14h', '15h', '16h', '17h'],
+        datasets: [
+          {
+            label: 'Traités',
+            data: [8, 15, 24, 32, 18, 12, 20, 28, 22, 10],
+            backgroundColor: '#22D47B88',
+            borderColor: '#22D47B',
+            borderWidth: 2,
+            borderRadius: 6,
+          },
+          {
+            label: 'En attente',
+            data: [3, 8, 12, 20, 14, 9, 16, 22, 18, 8],
+            backgroundColor: '#FF6B2B55',
+            borderColor: '#FF6B2B',
+            borderWidth: 2,
+            borderRadius: 6,
+            type: 'line',
+            tension: 0.4,
+            fill: false,
+            pointRadius: 4,
+            pointBackgroundColor: '#FF6B2B',
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        plugins: {
+          legend: { labels: { color: '#6B84B0', font: { family: 'Sora', size: 11 } } }
+        },
+        scales: {
+          x: { grid: { color: '#1E3A6E55' }, ticks: { color: '#6B84B0', font: { family: 'Sora' } } },
+          y: { grid: { color: '#1E3A6E55' }, ticks: { color: '#6B84B0', font: { family: 'Sora' } } }
+        }
+      }
+    });
+
+    // DOUGHNUT
+    const ctxD = document.getElementById('chartDoughnut').getContext('2d');
+    new Chart(ctxD, {
+      type: 'doughnut',
+      data: {
+        labels: ['Accueil', 'Scolarité', 'Comptabilité', 'Médecine', 'Technique'],
+        datasets: [{
+          data: [38, 22, 18, 35, 12],
+          backgroundColor: ['#FF6B2B', '#22D47B', '#4A9EFF', '#FF4D6A', '#6B84B0'],
+          borderColor: '#0B1629',
+          borderWidth: 3,
+          hoverOffset: 8
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        cutout: '70%',
+        plugins: {
+          legend: {
+            position: 'bottom',
+            labels: { color: '#6B84B0', font: { family: 'Sora', size: 10 }, padding: 12 }
+          }
+        }
+      }
+    });
+
+    // Animate KPIs
+    let kpiTotal = 147, kpiWait = 34;
+    setInterval(() => {
+      kpiTotal += Math.floor(Math.random() * 2);
+      kpiWait = Math.max(20, kpiWait + (Math.random() > .5 ? 1 : -1));
+      const totalElement = document.getElementById('kpiTotal');
+      const waitingElement = document.getElementById('kpiWaiting');
+      if (totalElement) totalElement.textContent = kpiTotal;
+      if (waitingElement) waitingElement.textContent = kpiWait;
+    }, 5000);
+  </script>
+</body>
+
+</html>

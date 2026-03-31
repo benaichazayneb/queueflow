@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>QueueFlow — Administration</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet" />
+  <style>
+    :root {
+      --navy:       #0B1629;
+      --navy-mid:   #112240;
+      --navy-light: #1A3560;
+      --navy-card:  #0F1E3A;
+      --orange:     #FF6B2B;
+      --orange-glow:#FF6B2B33;
+      --green:      #22D47B;
+      --green-glow: #22D47B33;
+      --blue:       #4A9EFF;
+      --blue-glow:  #4A9EFF33;
+      --red:        #FF4D6A;
+      --red-glow:   #FF4D6A33;
+      --white:      #F0F4FF;
+      --muted:      #6B84B0;
+      --border:     #1E3A6E;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Sora', sans-serif;
+      background: var(--navy);
+      color: var(--white);
+      min-height: 100vh;
+    }
+    body::before {
+      content: '';
+      position: fixed; inset: 0; z-index: 0;
+      background:
+        radial-gradient(ellipse 50% 35% at 90% 5%, #4A9EFF12 0%, transparent 60%),
+        radial-gradient(ellipse 40% 30% at 5% 90%, #FF6B2B10 0%, transparent 55%);
+      pointer-events: none;
+    }
+
+    /* SIDEBAR */
+    .sidebar {
+      position: fixed; top: 0; left: 0; bottom: 0; width: 240px;
+      background: rgba(11,22,41,.95);
+      backdrop-filter: blur(14px);
+      border-right: 1px solid var(--border);
+      z-index: 200;
+      display: flex; flex-direction: column;
+      padding: 1.5rem 1rem;
+    }
+    .sidebar-brand { display:flex;align-items:center;gap:.6rem;font-size:1.2rem;font-weight:800;color:var(--white);text-decoration:none;margin-bottom:2.5rem;padding:0 .5rem; }
+    .brand-icon { width:34px;height:34px;background:var(--orange);border-radius:9px;display:grid;place-items:center;color:#fff;font-size:.95rem; }
+    .nav-section-label { font-size:.62rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:700;padding:.25rem .75rem;margin-bottom:.35rem; }
+    .nav-item { display:flex;align-items:center;gap:.7rem;padding:.65rem .75rem;border-radius:11px;color:var(--muted);font-size:.85rem;font-weight:600;cursor:pointer;transition:all .2s;text-decoration:none;margin-bottom:.1rem; }
+    .nav-item:hover, .nav-item.active { background:var(--navy-light);color:var(--white); }
+    .nav-item.active { color:var(--orange);border-left:3px solid var(--orange); }
+    .nav-item i { font-size:1rem;flex-shrink:0; }
+    .sidebar-footer { margin-top:auto;padding-top:1rem;border-top:1px solid var(--border); }
+    .user-chip { display:flex;align-items:center;gap:.65rem;padding:.6rem .75rem;border-radius:11px;background:var(--navy-mid); }
+    .user-avatar { width:30px;height:30px;border-radius:50%;background:var(--navy-light);border:2px solid var(--orange);display:grid;place-items:center;font-size:.8rem; }
+    .user-name { font-size:.8rem;font-weight:700;color:var(--white); }
+    .user-role { font-size:.65rem;color:var(--muted); }
+
+    /* MAIN */
+    .main-content { margin-left:240px;position:relative;z-index:1;padding:2rem 2.5rem 4rem; }
+
+    /* TOPBAR */
+    .topbar { display:flex;align-items:center;justify-content:space-between;margin-bottom:2rem;flex-wrap:wrap;gap:1rem; }
+    .page-title { font-size:1.6rem;font-weight:800;color:var(--white); }
+    .page-sub { font-size:.82rem;color:var(--muted);margin-top:.2rem; }
+
+    /* TABS */
+    .qf-tabs { display:flex;gap:.4rem;background:var(--navy-mid);border:1px solid var(--border);border-radius:14px;padding:.35rem; margin-bottom:2rem; flex-wrap:wrap; }
+    .qf-tab {
+      flex:1;min-width:130px;
+      padding:.6rem 1rem;border-radius:10px;border:none;
+      font-family:'Sora',sans-serif;font-size:.82rem;font-weight:600;
+      color:var(--muted);background:transparent;cursor:pointer;
+      transition:all .2s;display:flex;align-items:center;justify-content:center;gap:.5rem;
+    }
+    .qf-tab:hover { color:var(--white); }
+    .qf-tab.active { background:var(--navy-card);color:var(--orange);border:1px solid var(--border); }
+
+    /* PANELS */
+    .tab-panel { display:none; }
+    .tab-panel.active { display:block;animation:fadeUp .3s ease both; }
+    @keyframes fadeUp { from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)} }
+
+    /* CARDS */
+    .qf-card { background:var(--navy-card);border:1px solid var(--border);border-radius:18px;padding:1.75rem;position:relative;overflow:hidden; }
+    .qf-card.accent-orange::before { content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--orange);border-radius:18px 18px 0 0; }
+    .qf-card.accent-green::before  { content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--green);border-radius:18px 18px 0 0; }
+    .qf-card.accent-blue::before   { content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--blue);border-radius:18px 18px 0 0; }
+
+    /* SECTION */
+    .sec-eye { font-size:.68rem;letter-spacing:.12em;text-transform:uppercase;color:var(--orange);font-weight:700;margin-bottom:.3rem; }
+    .sec-title { font-size:1.1rem;font-weight:800;color:var(--white);margin-bottom:1.25rem; }
+
+    /* FORM */
+    .qf-label { font-size:.72rem;font-weight:600;color:var(--muted);letter-spacing:.07em;text-transform:uppercase;margin-bottom:.45rem;display:block; }
+    .qf-input {
+      width:100%;background:var(--navy-mid);border:1.5px solid var(--border);
+      border-radius:12px;padding:.75rem 1rem;color:var(--white);
+      font-family:'Sora',sans-serif;font-size:.88rem;outline:none;
+      transition:border-color .2s;
+    }
+    .qf-input:focus { border-color:var(--orange); }
+    .qf-input::placeholder { color:var(--muted); }
+    .qf-select { appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M0 0l6 8 6-8z' fill='%236B84B0'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 1rem center; }
+
+    /* BUTTONS */
+    .btn-primary-qf {
+      background:linear-gradient(135deg,var(--orange),#FF9F5B);border:none;border-radius:12px;
+      color:#fff;font-family:'Sora',sans-serif;font-weight:700;font-size:.85rem;
+      padding:.7rem 1.5rem;cursor:pointer;transition:transform .2s,box-shadow .2s;
+      box-shadow:0 4px 16px var(--orange-glow);
+    }
+    .btn-primary-qf:hover { transform:translateY(-1px);box-shadow:0 6px 24px #FF6B2B44; }
+    .btn-secondary-qf {
+      background:var(--navy-mid);border:1.5px solid var(--border);border-radius:12px;
+      color:var(--muted);font-family:'Sora',sans-serif;font-weight:600;font-size:.85rem;
+      padding:.7rem 1.5rem;cursor:pointer;transition:all .2s;
+    }
+    .btn-secondary-qf:hover { border-color:var(--white);color:var(--white); }
+    .btn-icon {
+      width:34px;height:34px;border-radius:9px;border:none;cursor:pointer;
+      display:grid;place-items:center;font-size:.9rem;transition:all .2s;
+    }
+    .btn-edit { background:var(--blue-glow);color:var(--blue); }
+    .btn-edit:hover { background:var(--blue);color:#fff; }
+    .btn-del { background:var(--red-glow);color:var(--red); }
+    .btn-del:hover { background:var(--red);color:#fff; }
+    .btn-toggle { background:var(--green-glow);color:var(--green); }
+    .btn-toggle:hover { background:var(--green);color:#fff; }
+
+    /* TABLE */
+    .qf-table { width:100%;border-collapse:collapse; }
+    .qf-table th { font-size:.63rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);padding:.55rem .75rem;border-bottom:1px solid var(--border);text-align:left;white-space:nowrap; }
+    .qf-table td { padding:.7rem .75rem;font-size:.83rem;border-bottom:1px solid #1E3A6E44;vertical-align:middle; }
+    .qf-table tr:last-child td { border-bottom:none; }
+    .qf-table tr:hover td { background:#ffffff05; }
+
+    /* STATUS TOGGLE */
+    .toggle-switch { position:relative;display:inline-block;width:40px;height:22px; }
+    .toggle-switch input { opacity:0;width:0;height:0; }
+    .toggle-slider {
+      position:absolute;inset:0;border-radius:22px;cursor:pointer;
+      background:var(--border);transition:.3s;
+    }
+    .toggle-slider::before {
+      content:'';position:absolute;width:16px;height:16px;border-radius:50%;
+      background:var(--muted);bottom:3px;left:3px;transition:.3s;
+    }
+    input:checked + .toggle-slider { background:var(--green); }
+    input:checked + .toggle-slider::before { transform:translateX(18px);background:#fff; }
+
+    /* ROLE BADGE */
+    .role-badge { font-size:.65rem;font-weight:700;padding:.22rem .65rem;border-radius:20px;text-transform:uppercase;letter-spacing:.06em; }
+    .rb-admin { background:#4A9EFF33;color:var(--blue); }
+    .rb-sup   { background:var(--orange-glow);color:var(--orange); }
+    .rb-agent { background:var(--green-glow);color:var(--green); }
+    .rb-user  { background:var(--border);color:var(--muted); }
+
+    /* USER AVATAR */
+    .u-ava { width:32px;height:32px;border-radius:50%;background:var(--navy-light);border:2px solid var(--border);display:grid;place-items:center;font-size:.8rem;flex-shrink:0; }
+
+    /* MODAL OVERLAY */
+    .modal-overlay {
+      position:fixed;inset:0;background:#00000099;z-index:1000;
+      display:none;align-items:center;justify-content:center;
+    }
+    .modal-overlay.open { display:flex; }
+    .modal-box {
+      background:var(--navy-card);border:1px solid var(--border);border-radius:20px;
+      padding:2rem;width:100%;max-width:480px;
+      animation:fadeUp .3s ease both;
+    }
+    .modal-title { font-size:1.2rem;font-weight:800;color:var(--white);margin-bottom:.25rem; }
+    .modal-sub   { font-size:.8rem;color:var(--muted);margin-bottom:1.75rem; }
+    .modal-close { position:absolute;top:1.25rem;right:1.25rem;background:none;border:none;color:var(--muted);cursor:pointer;font-size:1.2rem; }
+
+    /* DIVIDER */
+    .qf-div { border:none;border-top:1px solid var(--border);margin:1.5rem 0; }
+
+    /* TOAST */
+    .qf-toast {
+      position:fixed;bottom:2rem;right:2rem;z-index:9999;
+      background:var(--navy-card);border:1px solid var(--green);border-left:4px solid var(--green);
+      border-radius:12px;padding:1rem 1.5rem;box-shadow:0 8px 30px #0008;
+      display:none;align-items:center;gap:.75rem;max-width:320px;
+    }
+    .qf-toast.show { display:flex;animation:slideIn .3s ease; }
+    @keyframes slideIn { from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:translateX(0)} }
+
+    /* SEARCH INPUT */
+    .search-wrap { position:relative; }
+    .search-wrap i { position:absolute;left:.9rem;top:50%;transform:translateY(-50%);color:var(--muted);font-size:.9rem; }
+    .search-wrap input { padding-left:2.4rem; }
+  </style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <a href="#" class="sidebar-brand">
+    <div class="brand-icon"><i class="bi bi-layers-fill"></i></div>
+    QueueFlow
+  </a>
+  <div class="nav-section-label">Administration</div>
+  
+  <a href="#" class="nav-item active" onclick="switchTab('services', this)">
+    <i class="bi bi-grid-3x3-gap-fill"></i> Services
+  </a>
+  
+  <a href="#" class="nav-item" onclick="switchTab('users', this)">
+    <i class="bi bi-people-fill"></i> Utilisateurs
+  </a>
+  
+  <a href="#" class="nav-item" onclick="switchTab('roles', this)">
+    <i class="bi bi-shield-fill"></i> Rôles & Permissions
+  </a>
+  
+  <a href="#" class="nav-item" onclick="switchTab('config', this)">
+    <i class="bi bi-sliders"></i> Configuration
+  </a>
+
+  <div class="sidebar-footer">
+    <div class="user-chip">
+      <div class="user-avatar">👑</div>
+      <div>
+        <div class="user-name">Admin Système</div>
+        <div class="user-role">Administrateur</div>
+      </div>
+    </div>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<div class="main-content">
+
+  <div class="topbar">
+    <div>
+      <h1 class="page-title">Administration</h1>
+      <p class="page-sub">Gestion des services, utilisateurs et rôles</p>
+    </div>
+    <button class="btn-primary-qf" onclick="openModal()">
+      <i class="bi bi-plus-lg me-1"></i> Ajouter
+    </button>
+  </div>
+
+  <!-- PANEL: SERVICES -->
+  <div class="tab-panel active" id="panel-services">
+    <div class="row g-4">
+      <div class="col-lg-8">
+        <div class="qf-card accent-orange">
+          <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
+            <div><p class="sec-eye">Liste</p><h3 class="sec-title" style="margin-bottom:0">Services actifs</h3></div>
+            <div class="search-wrap">
+              <i class="bi bi-search"></i>
+              <input class="qf-input" style="width:220px;padding:.55rem 1rem .55rem 2.4rem" placeholder="Rechercher..." />
+            </div>
+          </div>
+          <div style="overflow-x:auto">
+            <table class="qf-table" id="servicesTable">
+              <thead><tr><th>Service</th><th>Files</th><th>Priorité</th><th>Statut</th><th>Tickets/j</th><th>Actions</th></tr></thead>
+              <tbody id="servicesTbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      <div class="col-lg-4">
+        <div class="qf-card accent-green mb-4">
+          <p class="sec-eye">Nouveau service</p>
+          <h3 class="sec-title">Ajouter un service</h3>
+          <div class="mb-3">
+            <label class="qf-label">Nom du service</label>
+            <input class="qf-input" id="newSvcName" placeholder="Ex: Ressources Humaines" />
+          </div>
+          <div class="mb-3">
+            <label class="qf-label">Icône</label>
+            <input class="qf-input" id="newSvcIcon" placeholder="🏢" />
+          </div>
+          <div class="mb-4">
+            <label class="qf-label">Priorité par défaut</label>
+            <select class="qf-input qf-select" id="newSvcPrio">
+              <option value="normal">Normal</option>
+              <option value="urgent">Urgent disponible</option>
+            </select>
+          </div>
+          <button class="btn-primary-qf w-100" onclick="addService()">
+            <i class="bi bi-plus-circle me-1"></i> Créer le service
+          </button>
+        </div>
+        <div class="qf-card">
+          <p class="sec-eye">Statistiques</p>
+          <h3 class="sec-title">Résumé</h3>
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <span style="color:var(--muted);font-size:.83rem">Services actifs</span>
+            <span style="font-family:'JetBrains Mono',monospace;font-weight:700" id="statActif">4</span>
+          </div>
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <span style="color:var(--muted);font-size:.83rem">Files configurées</span>
+            <span style="font-family:'JetBrains Mono',monospace;font-weight:700">8</span>
+          </div>
+          <div class="d-flex justify-content-between align-items-center">
+            <span style="color:var(--muted);font-size:.83rem">Agents affectés</span>
+            <span style="font-family:'JetBrains Mono',monospace;font-weight:700">12</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PANEL: USERS -->
+  <div class="tab-panel" id="panel-users">
+    <div class="qf-card accent-blue">
+      <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
+        <div><p class="sec-eye">Gestion</p><h3 class="sec-title" style="margin-bottom:0">Comptes utilisateurs</h3></div>
+        <div class="d-flex gap-2 flex-wrap">
+          <div class="search-wrap">
+            <i class="bi bi-search"></i>
+            <input class="qf-input" style="width:200px;padding:.55rem 1rem .55rem 2.4rem" placeholder="Rechercher..." onkeyup="filterUsers(this.value)" />
+          </div>
+          <select class="qf-input qf-select" style="width:140px;" onchange="filterByRole(this.value)">
+            <option value="">Tous les rôles</option>
+            <option>Admin</option>
+            <option>Superviseur</option>
+            <option>Agent</option>
+            <option>Usager</option>
+          </select>
+        </div>
+      </div>
+      <div style="overflow-x:auto">
+        <table class="qf-table">
+          <thead><tr><th>Utilisateur</th><th>Email</th><th>Rôle</th><th>Service</th><th>Statut</th><th>Dernière connexion</th><th>Actions</th></tr></thead>
+          <tbody id="usersTbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- PANEL: ROLES -->
+  <div class="tab-panel" id="panel-roles">
+    <div class="row g-4">
+      <div class="col-lg-6">
+        <div class="qf-card accent-orange">
+          <p class="sec-eye">Matrice</p>
+          <h3 class="sec-title">Permissions par rôle</h3>
+          <div style="overflow-x:auto">
+            <table class="qf-table">
+              <thead>
+                <tr>
+                  <th>Permission</th>
+                  <th style="text-align:center">Usager</th>
+                  <th style="text-align:center">Agent</th>
+                  <th style="text-align:center">Superviseur</th>
+                  <th style="text-align:center">Admin</th>
+                </tr>
+              </thead>
+              <tbody id="permTbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      <div class="col-lg-6">
+        <div class="qf-card accent-green mb-4">
+          <p class="sec-eye">Attribution</p>
+          <h3 class="sec-title">Modifier un rôle</h3>
+          <div class="mb-3">
+            <label class="qf-label">Utilisateur</label>
+            <select class="qf-input qf-select">
+              <option>Sami Khalil</option><option>Nadia Bensalah</option><option>Omar Trabelsi</option><option>Rania Fathi</option>
+            </select>
+          </div>
+          <div class="mb-4">
+            <label class="qf-label">Nouveau rôle</label>
+            <select class="qf-input qf-select">
+              <option>Usager</option><option selected>Agent</option><option>Superviseur</option><option>Admin</option>
+            </select>
+          </div>
+          <button class="btn-primary-qf w-100" onclick="showToast('Rôle mis à jour','Le rôle a été attribué avec succès.')">
+            <i class="bi bi-shield-check me-1"></i> Appliquer
+          </button>
+        </div>
+        <div class="qf-card">
+          <p class="sec-eye">Résumé</p>
+          <h3 class="sec-title">Répartition des rôles</h3>
+          <div style="display:flex;flex-direction:column;gap:.6rem">
+            <div class="d-flex align-items-center gap-2">
+              <span class="role-badge rb-admin">Admin</span>
+              <div style="flex:1;height:6px;background:var(--border);border-radius:4px;overflow:hidden"><div style="width:5%;height:100%;background:var(--blue);border-radius:4px"></div></div>
+              <span style="font-family:'JetBrains Mono',monospace;font-size:.75rem;color:var(--muted)">1</span>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+              <span class="role-badge rb-sup">Superviseur</span>
+              <div style="flex:1;height:6px;background:var(--border);border-radius:4px;overflow:hidden"><div style="width:10%;height:100%;background:var(--orange);border-radius:4px"></div></div>
+              <span style="font-family:'JetBrains Mono',monospace;font-size:.75rem;color:var(--muted)">2</span>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+              <span class="role-badge rb-agent">Agent</span>
+              <div style="flex:1;height:6px;background:var(--border);border-radius:4px;overflow:hidden"><div style="width:30%;height:100%;background:var(--green);border-radius:4px"></div></div>
+              <span style="font-family:'JetBrains Mono',monospace;font-size:.75rem;color:var(--muted)">6</span>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+              <span class="role-badge rb-user">Usager</span>
+              <div style="flex:1;height:6px;background:var(--border);border-radius:4px;overflow:hidden"><div style="width:80%;height:100%;background:var(--muted);border-radius:4px"></div></div>
+              <span style="font-family:'JetBrains Mono',monospace;font-size:.75rem;color:var(--muted)">156</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PANEL: CONFIG -->
+  <div class="tab-panel" id="panel-config">
+    <div class="row g-4">
+      <div class="col-lg-6">
+        <div class="qf-card accent-orange">
+          <p class="sec-eye">Système</p>
+          <h3 class="sec-title">Paramètres généraux</h3>
+          <div class="mb-3"><label class="qf-label">Nom de l'établissement</label><input class="qf-input" value="Université des Sciences" /></div>
+          <div class="mb-3"><label class="qf-label">Heures d'ouverture</label><div class="row g-2"><div class="col-6"><input class="qf-input" type="time" value="08:00" /></div><div class="col-6"><input class="qf-input" type="time" value="17:00" /></div></div></div>
+          <div class="mb-4"><label class="qf-label">Délai d'expiration ticket (min)</label><input class="qf-input" type="number" value="30" /></div>
+          <button class="btn-primary-qf" onclick="showToast('Enregistré','Les paramètres ont été mis à jour.')"><i class="bi bi-floppy-fill me-1"></i>Enregistrer</button>
+        </div>
+      </div>
+      <div class="col-lg-6">
+        <div class="qf-card accent-green mb-4">
+          <p class="sec-eye">Notifications</p>
+          <h3 class="sec-title">Options de notification</h3>
+          <div style="display:flex;flex-direction:column;gap:1rem">
+            <div class="d-flex align-items-center justify-content-between">
+              <div><div style="font-size:.85rem;font-weight:600">Alerte surcharge</div><div style="font-size:.72rem;color:var(--muted)">Si file > 15 tickets</div></div>
+              <label class="toggle-switch"><input type="checkbox" checked /><span class="toggle-slider"></span></label>
+            </div>
+            <div class="d-flex align-items-center justify-content-between">
+              <div><div style="font-size:.85rem;font-weight:600">Rapport quotidien</div><div style="font-size:.72rem;color:var(--muted)">Envoi automatique à 17h</div></div>
+              <label class="toggle-switch"><input type="checkbox" checked /><span class="toggle-slider"></span></label>
+            </div>
+            <div class="d-flex align-items-center justify-content-between">
+              <div><div style="font-size:.85rem;font-weight:600">Alertes absences</div><div style="font-size:.72rem;color:var(--muted)">Notification si taux > 15%</div></div>
+              <label class="toggle-switch"><input type="checkbox" /><span class="toggle-slider"></span></label>
+            </div>
+            <div class="d-flex align-items-center justify-content-between">
+              <div><div style="font-size:.85rem;font-weight:600">Mode maintenance</div><div style="font-size:.72rem;color:var(--muted)">Bloquer nouvelles prises</div></div>
+              <label class="toggle-switch"><input type="checkbox" /><span class="toggle-slider"></span></label>
+            </div>
+          </div>
+        </div>
+        <div class="qf-card">
+          <p class="sec-eye">Données</p>
+          <h3 class="sec-title">Sauvegarde & Export</h3>
+          <div class="d-flex flex-wrap gap-2">
+            <button class="btn-secondary-qf" onclick="showToast('Sauvegarde','Sauvegarde lancée.')"><i class="bi bi-cloud-upload me-1"></i>Sauvegarder</button>
+            <button class="btn-secondary-qf" onclick="showToast('Export','Export CSV en cours.')"><i class="bi bi-download me-1"></i>Exporter CSV</button>
+            <button class="btn-secondary-qf" style="border-color:var(--red);color:var(--red)" onclick="showToast('Attention','Réinitialisation nécessite confirmation.')"><i class="bi bi-trash3 me-1"></i>Réinitialiser</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modalOverlay" onclick="closeModalOutside(event)">
+  <div class="modal-box" style="position:relative">
+    <button class="modal-close" onclick="closeModal()"><i class="bi bi-x-lg"></i></button>
+    <div class="modal-title">Nouvel utilisateur</div>
+    <div class="modal-sub">Créer un compte et attribuer un rôle</div>
+    <div class="row g-3">
+      <div class="col-6"><label class="qf-label">Prénom</label><input class="qf-input" placeholder="Ahmed" /></div>
+      <div class="col-6"><label class="qf-label">Nom</label><input class="qf-input" placeholder="Ben Ali" /></div>
+      <div class="col-12"><label class="qf-label">Email</label><input class="qf-input" type="email" placeholder="ahmed@exemple.com" /></div>
+      <div class="col-6"><label class="qf-label">Rôle</label><select class="qf-input qf-select"><option>Usager</option><option>Agent</option><option>Superviseur</option><option>Admin</option></select></div>
+      <div class="col-6"><label class="qf-label">Service</label><select class="qf-input qf-select"><option>Accueil Général</option><option>Scolarité</option><option>Médecine</option></select></div>
+      <div class="col-12"><label class="qf-label">Mot de passe temporaire</label><input class="qf-input" type="password" placeholder="••••••••" /></div>
+    </div>
+    <div class="d-flex gap-2 mt-4">
+      <button class="btn-primary-qf flex-fill" onclick="closeModal();showToast('Utilisateur créé','Le compte a été créé avec succès.')"><i class="bi bi-person-plus me-1"></i>Créer</button>
+      <button class="btn-secondary-qf" onclick="closeModal()">Annuler</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="qf-toast" id="toast">
+  <i class="bi bi-check-circle-fill" style="color:var(--green);font-size:1.4rem"></i>
+  <div>
+    <div id="toastTitle" style="font-weight:700;color:var(--green)">Succès</div>
+    <div id="toastMsg" style="font-size:.8rem;color:var(--muted)">Action effectuée.</div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  // DATA
+  let services = [
+    {id:1, name:'Accueil Général', icon:'🏛️', prio:'urgent', active:true, tickets:147},
+    {id:2, name:'Scolarité',       icon:'🎓', prio:'normal', active:true, tickets:84},
+    {id:3, name:'Comptabilité',    icon:'💰', prio:'normal', active:true, tickets:62},
+    {id:4, name:'Médecine',        icon:'🏥', prio:'urgent', active:true, tickets:201},
+    {id:5, name:'Technique',       icon:'⚙️', prio:'normal', active:false,tickets:33},
+  ];
+
+  const users = [
+    {name:'Admin Système', email:'admin@queue.tn', role:'Admin', svc:'Tous', active:true, last:'Aujourd\'hui 10:32'},
+    {name:'Leila Mansouri', email:'leila@queue.tn', role:'Superviseur', svc:'Tous', active:true, last:'Aujourd\'hui 09:15'},
+    {name:'Sami Khalil', email:'sami@queue.tn', role:'Agent', svc:'Accueil Général', active:true, last:'Aujourd\'hui 08:00'},
+    {name:'Nadia Bensalah', email:'nadia@queue.tn', role:'Agent', svc:'Scolarité', active:true, last:'Aujourd\'hui 08:05'},
+    {name:'Omar Trabelsi', email:'omar@queue.tn', role:'Agent', svc:'Médecine', active:true, last:'Aujourd\'hui 08:10'},
+    {name:'Rania Fathi', email:'rania@queue.tn', role:'Agent', svc:'Comptabilité', active:false, last:'Hier 17:42'},
+    {name:'Ahmed Ben Ali', email:'ahmed@gmail.com', role:'Usager', svc:'—', active:true, last:'Aujourd\'hui 10:15'},
+    {name:'Sara Bouaziz', email:'sara@gmail.com', role:'Usager', svc:'—', active:true, last:'Aujourd\'hui 09:50'},
+  ];
+
+  const permissions = [
+    {name:'Prendre un ticket',         u:true,  a:true,  s:true,  ad:true},
+    {name:'Appeler le ticket suivant', u:false, a:true,  s:false, ad:true},
+    {name:'Marquer traité/absent',     u:false, a:true,  s:false, ad:true},
+    {name:'Voir les KPI globaux',      u:false, a:false, s:true,  ad:true},
+    {name:'Gérer les services',        u:false, a:false, s:false, ad:true},
+    {name:'Gérer les utilisateurs',    u:false, a:false, s:false, ad:true},
+    {name:'Attribuer des rôles',       u:false, a:false, s:false, ad:true},
+    {name:'Exporter les données',      u:false, a:false, s:true,  ad:true},
+  ];
+
+  const roleMap = {Admin:'rb-admin',Superviseur:'rb-sup',Agent:'rb-agent',Usager:'rb-user'};
+
+  function renderServices() {
+    const tb = document.getElementById('servicesTbody');
+    tb.innerHTML = '';
+    services.forEach(s => {
+      tb.innerHTML += `
+        <tr>
+          <td><span style="font-size:1.1rem;margin-right:.4rem">${s.icon}</span><span style="font-weight:700">${s.name}</span></td>
+          <td style="font-family:'JetBrains Mono',monospace">1</td>
+          <td>${s.prio==='urgent'?'<span style="color:var(--orange)">⚡ Urgent</span>':'<span style="color:var(--muted)">Normal</span>'}</td>
+          <td><label class="toggle-switch"><input type="checkbox" ${s.active?'checked':''} onchange="toggleService(${s.id})" /><span class="toggle-slider"></span></label></td>
+          <td style="font-family:'JetBrains Mono',monospace">${s.tickets}</td>
+          <td><div class="d-flex gap-1"><button class="btn-icon btn-edit" onclick="showToast('Édition','Modification de ${s.name}')"><i class="bi bi-pencil-fill"></i></button><button class="btn-icon btn-del" onclick="deleteService(${s.id})"><i class="bi bi-trash3-fill"></i></button></div></td>
+        </tr>`;
+    });
+    document.getElementById('statActif').textContent = services.filter(s=>s.active).length;
+  }
+
+  function renderUsers() {
+    const tb = document.getElementById('usersTbody');
+    tb.innerHTML = '';
+    users.forEach((u,i) => {
+      tb.innerHTML += `
+        <tr>
+          <td><div class="d-flex align-items-center gap-2"><div class="u-ava">👤</div><span style="font-weight:700">${u.name}</span></div></td>
+          <td style="color:var(--muted)">${u.email}</td>
+          <td><span class="role-badge ${roleMap[u.role]}">${u.role}</span></td>
+          <td style="color:var(--muted);font-size:.78rem">${u.svc}</td>
+          <td><label class="toggle-switch"><input type="checkbox" ${u.active?'checked':''} /><span class="toggle-slider"></span></label></td>
+          <td style="color:var(--muted);font-size:.75rem">${u.last}</td>
+          <td><div class="d-flex gap-1"><button class="btn-icon btn-edit" onclick="showToast('Édition','Modification de ${u.name}')"><i class="bi bi-pencil-fill"></i></button><button class="btn-icon btn-del"><i class="bi bi-trash3-fill"></i></button></div></td>
+        </tr>`;
+    });
+  }
+
+  function renderPermissions() {
+    const tb = document.getElementById('permTbody');
+    if (!tb) return;
+    tb.innerHTML = '';
+    permissions.forEach(p => {
+      const check = v => v ? `<span style="color:var(--green);font-size:1rem">✓</span>` : `<span style="color:var(--border);font-size:1rem">—</span>`;
+      tb.innerHTML += `
+        <tr>
+          <td style="font-size:.8rem">${p.name}</td>
+          <td style="text-align:center">${check(p.u)}</td>
+          <td style="text-align:center">${check(p.a)}</td>
+          <td style="text-align:center">${check(p.s)}</td>
+          <td style="text-align:center">${check(p.ad)}</td>
+        </tr>`;
+    });
+  }
+
+  function toggleService(id) {
+    const s = services.find(s=>s.id===id);
+    if (s) { s.active = !s.active; renderServices(); }
+  }
+
+  function deleteService(id) {
+    services = services.filter(s=>s.id!==id);
+    renderServices();
+    showToast('Supprimé','Le service a été retiré.');
+  }
+
+  function addService() {
+    const name = document.getElementById('newSvcName').value.trim();
+    const icon = document.getElementById('newSvcIcon').value.trim() || '🏢';
+    const prio = document.getElementById('newSvcPrio').value;
+    if (!name) return;
+    services.push({id: Date.now(), name, icon, prio, active: true, tickets: 0});
+    renderServices();
+    document.getElementById('newSvcName').value = '';
+    document.getElementById('newSvcIcon').value = '';
+    showToast('Service créé', name + ' a été ajouté.');
+  }
+
+  function filterUsers(q) {
+    const rows = document.querySelectorAll('#usersTbody tr');
+    rows.forEach(r => {
+      r.style.display = r.textContent.toLowerCase().includes(q.toLowerCase()) ? '' : 'none';
+    });
+  }
+
+  function filterByRole(role) {
+    const rows = document.querySelectorAll('#usersTbody tr');
+    rows.forEach(r => {
+      r.style.display = (!role || r.textContent.includes(role)) ? '' : 'none';
+    });
+  }
+
+  function switchTab(name, el) {
+      // panels
+      document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+
+      // sidebar active
+      document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+
+      document.getElementById('panel-' + name).classList.add('active');
+      el.classList.add('active');
+
+      if (name === 'roles') renderPermissions();
+    }
+
+  function openModal()  { document.getElementById('modalOverlay').classList.add('open'); }
+  function closeModal() { document.getElementById('modalOverlay').classList.remove('open'); }
+  function closeModalOutside(e) { if (e.target === document.getElementById('modalOverlay')) closeModal(); }
+
+  function showToast(title, msg) {
+    document.getElementById('toastTitle').textContent = title;
+    document.getElementById('toastMsg').textContent = msg;
+    const t = document.getElementById('toast');
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 3500);
+  }
+
+  // INIT
+  renderServices();
+  renderUsers();
+</script>
+</body>
+</html>

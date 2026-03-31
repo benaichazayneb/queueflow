@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>QueueFlow — Espace Usager</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet" />
+  <style>
+    :root {
+      --navy:       #0B1629;
+      --navy-mid:   #112240;
+      --navy-light: #1A3560;
+      --navy-card:  #0F1E3A;
+      --orange:     #FF6B2B;
+      --orange-glow:#FF6B2B33;
+      --green:      #22D47B;
+      --green-glow: #22D47B33;
+      --white:      #F0F4FF;
+      --muted:      #6B84B0;
+      --border:     #1E3A6E;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Sora', sans-serif;
+      background: var(--navy);
+      color: var(--white);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ─── BACKGROUND MESH ─────────────────────── */
+    body::before {
+      content: '';
+      position: fixed; inset: 0; z-index: 0;
+      background:
+        radial-gradient(ellipse 60% 40% at 80% 10%, #FF6B2B18 0%, transparent 60%),
+        radial-gradient(ellipse 50% 40% at 10% 80%, #22D47B12 0%, transparent 55%),
+        radial-gradient(ellipse 80% 60% at 50% 50%, #1A356020 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    /* ─── NAVBAR ──────────────────────────────── */
+    .navbar-qf {
+      background: rgba(11,22,41,.85);
+      backdrop-filter: blur(14px);
+      border-bottom: 1px solid var(--border);
+      padding: 1rem 2rem;
+      position: sticky; top: 0; z-index: 100;
+    }
+    .navbar-brand-qf {
+      display: flex; align-items: center; gap: .6rem;
+      font-size: 1.35rem; font-weight: 800; letter-spacing: -.5px; color: var(--white);
+      text-decoration: none;
+    }
+    .brand-icon {
+      width: 36px; height: 36px; background: var(--orange);
+      border-radius: 10px; display: grid; place-items: center;
+      font-size: 1rem; color: #fff;
+    }
+    .role-badge {
+      background: var(--navy-light);
+      border: 1px solid var(--border);
+      color: var(--muted);
+      padding: .2rem .75rem;
+      border-radius: 20px;
+      font-size: .72rem;
+      font-weight: 600;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+    }
+
+    /* ─── MAIN LAYOUT ─────────────────────────── */
+    .main-wrapper {
+      position: relative; z-index: 1;
+      padding: 2.5rem 0 4rem;
+    }
+
+    /* ─── SECTION TITLES ──────────────────────── */
+    .section-eyebrow {
+      font-size: .7rem; letter-spacing: .12em; text-transform: uppercase;
+      color: var(--orange); font-weight: 700; margin-bottom: .4rem;
+    }
+    .section-title {
+      font-size: 1.6rem; font-weight: 800; line-height: 1.2;
+      color: var(--white); margin-bottom: 1.5rem;
+    }
+
+    /* ─── CARDS ───────────────────────────────── */
+    .qf-card {
+      background: var(--navy-card);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 2rem;
+      position: relative;
+      overflow: hidden;
+      transition: border-color .3s, box-shadow .3s;
+    }
+    .qf-card:hover {
+      border-color: var(--navy-light);
+      box-shadow: 0 8px 40px #0008;
+    }
+    .qf-card::before {
+      content: '';
+      position: absolute; top: 0; left: 0; right: 0; height: 3px;
+      border-radius: 18px 18px 0 0;
+    }
+    .qf-card.accent-orange::before { background: var(--orange); }
+    .qf-card.accent-green::before  { background: var(--green); }
+    .qf-card.accent-blue::before   { background: #4A9EFF; }
+
+    /* ─── SERVICE SELECTOR ────────────────────── */
+    .service-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px,1fr)); gap: 1rem; }
+    .service-btn {
+      background: var(--navy-mid);
+      border: 2px solid var(--border);
+      border-radius: 14px;
+      padding: 1.25rem 1rem;
+      cursor: pointer;
+      text-align: center;
+      transition: all .25s;
+      color: var(--white);
+    }
+    .service-btn:hover, .service-btn.selected {
+      border-color: var(--orange);
+      background: var(--orange-glow);
+      box-shadow: 0 0 20px var(--orange-glow);
+    }
+    .service-btn.selected { color: var(--orange); }
+    .service-icon {
+      font-size: 2rem; margin-bottom: .5rem;
+      display: block;
+    }
+    .service-name { font-size: .85rem; font-weight: 600; }
+    .service-wait { font-size: .7rem; color: var(--muted); margin-top: .2rem; }
+
+    /* ─── PRIORITY TOGGLE ─────────────────────── */
+    .priority-toggle {
+      display: flex; gap: .75rem; flex-wrap: wrap;
+    }
+    .prio-btn {
+      flex: 1; min-width: 120px;
+      background: var(--navy-mid);
+      border: 2px solid var(--border);
+      border-radius: 12px;
+      padding: .85rem;
+      cursor: pointer;
+      text-align: center;
+      transition: all .25s;
+      color: var(--muted);
+      font-family: 'Sora', sans-serif;
+    }
+    .prio-btn:hover { border-color: var(--muted); color: var(--white); }
+    .prio-btn.active-normal { border-color: var(--green); color: var(--green); background: var(--green-glow); }
+    .prio-btn.active-urgent { border-color: var(--orange); color: var(--orange); background: var(--orange-glow); }
+    .prio-label { font-weight: 700; font-size: .9rem; }
+    .prio-desc { font-size: .7rem; margin-top: .15rem; }
+
+    /* ─── CTA BUTTON ──────────────────────────── */
+    .btn-take-ticket {
+      background: linear-gradient(135deg, var(--orange), #FF9F5B);
+      border: none;
+      border-radius: 14px;
+      color: #fff;
+      font-family: 'Sora', sans-serif;
+      font-weight: 700;
+      font-size: 1rem;
+      padding: 1rem 2.5rem;
+      cursor: pointer;
+      transition: transform .2s, box-shadow .2s;
+      box-shadow: 0 4px 20px var(--orange-glow);
+    }
+    .btn-take-ticket:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 30px #FF6B2B55;
+    }
+    .btn-take-ticket:active { transform: translateY(0); }
+
+    /* ─── TICKET DISPLAY ──────────────────────── */
+    .ticket-display {
+      display: none;
+      animation: fadeUp .5s ease both;
+    }
+    .ticket-display.visible { display: block; }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .ticket-number-box {
+      background: linear-gradient(135deg, var(--navy-light), var(--navy-mid));
+      border: 2px solid var(--orange);
+      border-radius: 20px;
+      padding: 2rem;
+      text-align: center;
+      box-shadow: 0 0 40px var(--orange-glow);
+    }
+    .ticket-label { font-size: .75rem; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+    .ticket-num {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 4rem; font-weight: 700;
+      color: var(--orange);
+      line-height: 1;
+      margin: .5rem 0;
+    }
+    .ticket-service { font-size: .9rem; color: var(--white); font-weight: 600; }
+
+    /* ─── POSITION TRACKER ────────────────────── */
+    .position-ring {
+      position: relative;
+      width: 140px; height: 140px;
+      margin: 0 auto;
+    }
+    .position-ring svg { transform: rotate(-90deg); }
+    .ring-track { fill: none; stroke: var(--border); stroke-width: 10; }
+    .ring-progress {
+      fill: none; stroke: var(--green); stroke-width: 10;
+      stroke-linecap: round;
+      stroke-dasharray: 360;
+      stroke-dashoffset: 90;
+      transition: stroke-dashoffset 1s ease;
+    }
+    .ring-center {
+      position: absolute; inset: 0;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+    }
+    .ring-num {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 2.4rem; font-weight: 700; color: var(--green); line-height: 1;
+    }
+    .ring-sub { font-size: .65rem; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; }
+
+    /* ─── STATUS STEPS ────────────────────────── */
+    .status-steps {
+      display: flex; flex-direction: column; gap: .5rem;
+    }
+    .step-item {
+      display: flex; align-items: center; gap: .75rem;
+      padding: .6rem .8rem;
+      border-radius: 10px;
+      font-size: .82rem;
+    }
+    .step-item.done    { background: var(--green-glow); color: var(--green); }
+    .step-item.current { background: var(--orange-glow); color: var(--orange); }
+    .step-item.pending { color: var(--muted); }
+    .step-dot {
+      width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0;
+      background: currentColor;
+    }
+    .step-item.pending .step-dot { background: var(--border); }
+
+    /* ─── STATS ROW ───────────────────────────── */
+    .stat-pill {
+      background: var(--navy-mid);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: .85rem 1.2rem;
+      text-align: center;
+    }
+    .stat-val {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 1.4rem; font-weight: 700; color: var(--white);
+    }
+    .stat-lbl { font-size: .68rem; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; margin-top: .2rem; }
+
+    /* ─── LIVE DOT ────────────────────────────── */
+    .live-dot {
+      display: inline-block; width: 8px; height: 8px;
+      border-radius: 50%; background: var(--green);
+      animation: pulse-green 1.5s ease-in-out infinite;
+      margin-right: .4rem;
+    }
+    @keyframes pulse-green {
+      0%, 100% { box-shadow: 0 0 0 0 var(--green-glow); }
+      50%       { box-shadow: 0 0 0 6px transparent; }
+    }
+
+    /* ─── FORM CONTROLS ───────────────────────── */
+    .qf-label { font-size: .78rem; font-weight: 600; color: var(--muted); letter-spacing: .06em; text-transform: uppercase; margin-bottom: .5rem; display: block; }
+    .qf-input {
+      width: 100%; background: var(--navy-mid); border: 1.5px solid var(--border);
+      border-radius: 12px; padding: .8rem 1rem; color: var(--white);
+      font-family: 'Sora', sans-serif; font-size: .9rem;
+      outline: none; transition: border-color .2s;
+    }
+    .qf-input:focus { border-color: var(--orange); }
+    .qf-input::placeholder { color: var(--muted); }
+
+    /* ─── DIVIDER ─────────────────────────────── */
+    .qf-divider { border: none; border-top: 1px solid var(--border); margin: 2rem 0; }
+
+    /* ─── FOOTER ──────────────────────────────── */
+    footer {
+      text-align: center; color: var(--muted);
+      font-size: .75rem; padding: 2rem;
+      border-top: 1px solid var(--border);
+      position: relative; z-index: 1;
+    }
+
+    /* ─── TOAST ───────────────────────────────── */
+    .qf-toast {
+      position: fixed; bottom: 2rem; right: 2rem; z-index: 9999;
+      background: var(--navy-card);
+      border: 1px solid var(--green);
+      border-left: 4px solid var(--green);
+      border-radius: 12px;
+      padding: 1rem 1.5rem;
+      box-shadow: 0 8px 30px #0008;
+      display: none; align-items: center; gap: .75rem;
+      animation: slideIn .3s ease;
+      max-width: 320px;
+    }
+    .qf-toast.show { display: flex; }
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateX(20px); }
+      to   { opacity: 1; transform: translateX(0); }
+    }
+    .service-btn {
+  position: relative;
+}
+
+/* badge en haut à droite */
+.service-badge {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  font-size: 0.6rem;
+  padding: 2px 6px;
+  border-radius: 8px;
+  background: var(--navy-light);
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.service-badge.urgent {
+  background: var(--orange);
+  color: #fff;
+}
+  </style>
+</head>
+<body>
+
+<!-- NAVBAR -->
+<nav class="navbar-qf d-flex align-items-center justify-content-between">
+  <a href="#" class="navbar-brand-qf">
+    <div class="brand-icon"><i class="bi bi-layers-fill"></i></div>
+    QueueFlow
+  </a>
+  <div class="d-flex align-items-center gap-3">
+    <span class="live-dot"></span>
+    <span style="font-size:.8rem;color:var(--muted)">Système actif</span>
+    <span class="role-badge">Espace Usager</span>
+  </div>
+</nav>
+
+<!-- MAIN -->
+<div class="main-wrapper">
+  <div class="container" style="max-width:900px">
+
+    <!-- STEP 1 : TAKE TICKET -->
+    <div class="mb-4">
+      <p class="section-eyebrow">Étape 1</p>
+      <h1 class="section-title">Prenez votre ticket en ligne</h1>
+    </div>
+
+    <div class="qf-card accent-orange mb-4">
+      <p class="qf-label mb-3"><i class="bi bi-grid-3x3-gap me-1"></i> Choisissez un service</p>
+      <div>
+        <select class="qf-input" id="serviceSelect" onchange="selectServiceFromDropdown()">
+          <option value="Accueil Général">🏛️ Accueil Général (~12 min)</option>
+          <option value="Scolarité">🎓 Scolarité (~8 min)</option>
+          <option value="Comptabilité">💰 Comptabilité (~20 min)</option>
+          <option value="Médecine">🏥 Médecine (~35 min)</option>
+          <option value="Technique">⚙️ Technique (~5 min)</option>
+        </select>
+      </div>
+      </div>
+
+      <hr class="qf-divider" />
+
+      <p class="qf-label mb-3"><i class="bi bi-lightning-fill me-1"></i> Priorité</p>
+      <div class="priority-toggle mb-4">
+        <button class="prio-btn active-normal" id="pNormal" onclick="setPriority('normal')">
+          <div class="prio-label">Normal</div>
+          <div class="prio-desc">File d'attente standard</div>
+        </button>
+        <button class="prio-btn" id="pUrgent" onclick="setPriority('urgent')">
+          <div class="prio-label">⚡ Urgent</div>
+          <div class="prio-desc">Cas prioritaire validé</div>
+        </button>
+      </div>
+
+      <div class="row g-3 mb-4">
+        <div class="col-md-6">
+          <label class="qf-label">Votre nom (optionnel)</label>
+          <input class="qf-input" type="text" id="userName" placeholder="Ex : Ahmed Ben Ali" />
+        </div>
+        <div class="col-md-6">
+          <label class="qf-label">Email (optionnel)</label>
+          <input class="qf-input" type="email" id="userEmail" placeholder="email@exemple.com" />
+        </div>
+      </div>
+
+      <button class="btn-take-ticket w-100" onclick="takeTicket()">
+        <i class="bi bi-ticket-perforated me-2"></i> Obtenir mon ticket
+      </button>
+    </div>
+
+    <!-- STEP 2 : TICKET + STATUS -->
+    <div class="ticket-display" id="ticketDisplay">
+      <p class="section-eyebrow">Votre ticket</p>
+      <h2 class="section-title">Suivez votre position en temps réel</h2>
+
+      <div class="row g-4 mb-4">
+        <div class="col-md-5">
+          <div class="qf-card accent-orange h-100">
+            <div class="ticket-number-box">
+              <div class="ticket-label">Numéro de ticket</div>
+              <div class="ticket-num" id="ticketNum">A042</div>
+              <div class="ticket-service" id="ticketService">Accueil Général · Normal</div>
+            </div>
+            <div class="row g-2 mt-3">
+              <div class="col-6">
+                <div class="stat-pill">
+                  <div class="stat-val" id="dispPos">7</div>
+                  <div class="stat-lbl">Position</div>
+                </div>
+              </div>
+              <div class="col-6">
+                <div class="stat-pill">
+                  <div class="stat-val" id="dispWait">~14</div>
+                  <div class="stat-lbl">Min attente</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-md-7">
+          <div class="qf-card accent-green h-100">
+            <p class="qf-label mb-3"><i class="bi bi-activity me-1"></i> Statut en temps réel</p>
+            <div class="d-flex justify-content-center mb-4">
+              <div class="position-ring">
+                <svg viewBox="0 0 120 120" width="140" height="140">
+                  <circle class="ring-track" cx="60" cy="60" r="52"/>
+                  <circle class="ring-progress" id="ringProgress" cx="60" cy="60" r="52"/>
+                </svg>
+                <div class="ring-center">
+                  <div class="ring-num" id="ringNum">7</div>
+                  <div class="ring-sub">en file</div>
+                </div>
+              </div>
+            </div>
+            <div class="status-steps">
+              <div class="step-item done"><div class="step-dot"></div> Ticket créé</div>
+              <div class="step-item current" id="stepWait"><div class="step-dot"></div> <span id="stepWaitText">En attente — position 7</span></div>
+              <div class="step-item pending" id="stepCall"><div class="step-dot"></div> Appelé au guichet</div>
+              <div class="step-item pending" id="stepDone"><div class="step-dot"></div> Service terminé</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- CURRENT TICKET CALLED -->
+      <div class="qf-card accent-blue">
+        <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+          <div>
+            <p class="qf-label mb-1"><i class="bi bi-megaphone-fill me-1"></i> Ticket actuellement appelé</p>
+            <span style="font-family:'JetBrains Mono',monospace;font-size:2rem;font-weight:700;color:#4A9EFF" id="calledTicket">A035</span>
+            <span style="color:var(--muted);font-size:.85rem;margin-left:.75rem">— Guichet 2</span>
+          </div>
+          <button class="btn-take-ticket" style="background:linear-gradient(135deg,#22D47B,#1AB866);box-shadow:0 4px 20px var(--green-glow)" onclick="cancelTicket()">
+            <i class="bi bi-x-circle me-1"></i> Annuler mon ticket
+          </button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="qf-toast" id="toast">
+  <i class="bi bi-check-circle-fill" style="color:var(--green);font-size:1.4rem"></i>
+  <div>
+    <div style="font-weight:700;color:var(--green)">Ticket obtenu !</div>
+    <div style="font-size:.8rem;color:var(--muted)">Suivez votre position ci-dessous.</div>
+  </div>
+</div>
+
+<footer>© 2025 QueueFlow — Système de gestion des files d'attente</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  let selectedService = 'Accueil Général';
+  let selectedPriority = 'normal';
+  let ticketCounter = 41;
+  let currentPos = 7;
+  let simulInterval = null;
+  function selectServiceFromDropdown() {
+      const select = document.getElementById('serviceSelect');
+      selectedService = select.value;
+    }
+
+  function selectService(el, name) {
+    document.querySelectorAll('.service-btn').forEach(b => b.classList.remove('selected'));
+    el.classList.add('selected');
+    selectedService = name;
+  }
+
+  function setPriority(p) {
+    selectedPriority = p;
+    document.getElementById('pNormal').className = 'prio-btn' + (p === 'normal' ? ' active-normal' : '');
+    document.getElementById('pUrgent').className = 'prio-btn' + (p === 'urgent' ? ' active-urgent' : '');
+  }
+
+  function takeTicket() {
+    ticketCounter++;
+    const prefix = selectedService.charAt(0).toUpperCase();
+    const num = prefix + ticketCounter.toString().padStart('3','0');
+    document.getElementById('ticketNum').textContent = num;
+    document.getElementById('ticketService').textContent = selectedService + ' · ' + (selectedPriority === 'urgent' ? '⚡ Urgent' : 'Normal');
+    document.getElementById('ticketDisplay').classList.add('visible');
+    document.getElementById('ticketDisplay').scrollIntoView({behavior:'smooth',block:'start'});
+    showToast();
+    updatePosition(currentPos);
+    if (simulInterval) clearInterval(simulInterval);
+    simulInterval = setInterval(() => {
+      if (currentPos > 1) { currentPos--; updatePosition(currentPos); }
+      else { clearInterval(simulInterval); markCalled(); }
+    }, 4000);
+  }
+
+  function updatePosition(pos) {
+    document.getElementById('dispPos').textContent = pos;
+    document.getElementById('dispWait').textContent = '~' + (pos * 2);
+    document.getElementById('ringNum').textContent = pos;
+    document.getElementById('stepWaitText').textContent = 'En attente — position ' + pos;
+    const circ = 2 * Math.PI * 52;
+    const offset = circ - (circ * ((10 - pos) / 10));
+    document.getElementById('ringProgress').style.strokeDasharray = circ;
+    document.getElementById('ringProgress').style.strokeDashoffset = offset;
+  }
+
+  function markCalled() {
+    document.getElementById('stepWait').className = 'step-item done';
+    document.getElementById('stepCall').className = 'step-item current';
+    const num = document.getElementById('ticketNum').textContent;
+    document.getElementById('calledTicket').textContent = num;
+    document.getElementById('calledTicket').style.color = 'var(--orange)';
+    document.getElementById('ringProgress').style.stroke = 'var(--orange)';
+  }
+
+  function cancelTicket() {
+    if (simulInterval) clearInterval(simulInterval);
+    document.getElementById('ticketDisplay').classList.remove('visible');
+    currentPos = 7;
+  }
+
+  function showToast() {
+    const t = document.getElementById('toast');
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 3500);
+  }
+</script>
+</body>
+</html>
