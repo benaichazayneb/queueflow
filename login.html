@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>QueueFlow — Connexion</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet" />
+  <style>
+    :root {
+      --navy:       #0B1629;
+      --navy-mid:   #112240;
+      --navy-light: #1A3560;
+      --navy-card:  #0F1E3A;
+      --orange:     #FF6B2B;
+      --orange-soft:#FF6B2B20;
+      --orange-glow:#FF6B2B44;
+      --green:      #22D47B;
+      --green-glow: #22D47B33;
+      --red:        #FF4D6A;
+      --white:      #F0F4FF;
+      --muted:      #6B84B0;
+      --border:     #1E3A6E;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Sora', sans-serif;
+      background: var(--navy);
+      color: var(--white);
+      min-height: 100vh;
+      display: flex;
+      overflow-x: hidden;
+      flex-direction: row;
+    }
+
+    /* ── BACKGROUND ─────────────────────────────── */
+    .bg-layer { position: fixed; inset: 0; z-index: 0; overflow: hidden; }
+    .orb {
+      position: absolute; border-radius: 50%;
+      filter: blur(90px); opacity: .4;
+      animation: drift 14s ease-in-out infinite alternate;
+    }
+    .orb1 { width: 600px; height: 600px; background: #FF6B2B; top: -200px; right: -150px; }
+    .orb2 { width: 400px; height: 400px; background: #22D47B; bottom: -120px; left: -100px; animation-delay: -5s; }
+    .orb3 { width: 280px; height: 280px; background: #4A9EFF; top: 45%; left: 38%; opacity: .22; animation-delay: -9s; }
+    @keyframes drift {
+      from { transform: translate(0,0) scale(1); }
+      to   { transform: translate(25px,18px) scale(1.07); }
+    }
+    .bg-grid {
+      position: fixed; inset: 0; z-index: 0;
+      background-image:
+        linear-gradient(var(--border) 1px, transparent 1px),
+        linear-gradient(90deg, var(--border) 1px, transparent 1px);
+      background-size: 56px 56px;
+      opacity: .16;
+    }
+
+    /* ── SPLIT ──────────────────────────────────── */
+    .split-left {
+      flex: 1; position: relative; z-index: 1;
+      display: flex; flex-direction: column;
+      justify-content: center; padding: 4rem 5rem;
+      border-right: 1px solid var(--border);
+    }
+    .split-right {
+      width: 500px; flex-shrink: 0;
+      position: relative; z-index: 1;
+      display: flex; flex-direction: column;
+      justify-content: center; align-items: center;
+      padding: 3.5rem 3.5rem;
+      background: rgba(15,30,58,.8);
+      backdrop-filter: blur(24px);
+    }
+
+    /* ── BRAND ──────────────────────────────────── */
+    .brand {
+      display: flex; align-items: center; gap: .75rem;
+      font-size: 1.45rem; font-weight: 800; color: var(--white);
+      margin-bottom: 3.5rem; text-decoration: none;
+    }
+    .brand-icon {
+      width: 42px; height: 42px; background: var(--orange);
+      border-radius: 12px; display: grid; place-items: center;
+      font-size: 1.1rem; color: #fff;
+      box-shadow: 0 0 28px var(--orange-glow);
+    }
+
+    /* ── HERO ───────────────────────────────────── */
+    .eyebrow {
+      font-size: .7rem; letter-spacing: .18em; text-transform: uppercase;
+      color: var(--orange); font-weight: 700; margin-bottom: .6rem;
+    }
+    .hero-title {
+      font-size: 3.2rem; font-weight: 800; line-height: 1.1;
+      color: var(--white); margin-bottom: 1.2rem;
+    }
+    .hero-title .accent { color: var(--orange); }
+    .hero-sub {
+      font-size: .95rem; color: var(--muted); line-height: 1.75;
+      max-width: 420px; margin-bottom: 3rem;
+    }
+
+    /* ── FEATURE ITEMS ──────────────────────────── */
+    .features { display: flex; flex-direction: column; gap: .7rem; margin-bottom: 3rem; }
+    .feat {
+      display: flex; align-items: center; gap: .9rem;
+      padding: .85rem 1.1rem;
+      background: rgba(255,255,255,.04);
+      border: 1px solid var(--border); border-radius: 14px;
+      transition: border-color .25s;
+    }
+    .feat:hover { border-color: var(--orange-soft); }
+    .feat-ico {
+      width: 38px; height: 38px; border-radius: 11px;
+      display: grid; place-items: center; font-size: 1rem; flex-shrink: 0;
+    }
+    .ico-o { background: var(--orange-soft); color: var(--orange); }
+    .ico-g { background: var(--green-glow);  color: var(--green);  }
+    .ico-b { background: #4A9EFF22;           color: #4A9EFF;       }
+    .feat-name { font-weight: 700; font-size: .82rem; color: var(--white); }
+    .feat-desc { font-size: .72rem; color: var(--muted); margin-top: .05rem; }
+
+    /* ── STATS ──────────────────────────────────── */
+    .stats-row { display: flex; align-items: center; gap: 1.5rem; flex-wrap: wrap; }
+    .stat-item { text-align: center; }
+    .stat-val {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 1.65rem; font-weight: 700;
+    }
+    .stat-lbl { font-size: .67rem; color: var(--muted); text-transform: uppercase; letter-spacing: .09em; margin-top: .15rem; }
+    .vr { width: 1px; height: 38px; background: var(--border); }
+
+    /* ── FORM WRAPPER ───────────────────────────── */
+    .form-wrap { width: 100%; position: relative; }
+
+    /* ── SUCCESS OVERLAY ────────────────────────── */
+    .success-overlay {
+      position: absolute; inset: 0; z-index: 10;
+      background: var(--navy-card);
+      border-radius: 20px;
+      display: none; flex-direction: column;
+      align-items: center; justify-content: center;
+      text-align: center; padding: 3rem;
+      animation: fadeUp .4s ease both;
+    }
+    .success-overlay.show { display: flex; }
+    .s-ring {
+      width: 76px; height: 76px; border-radius: 50%;
+      background: var(--green-glow); border: 2px solid var(--green);
+      display: grid; place-items: center; font-size: 2rem;
+      margin-bottom: 1.25rem;
+      animation: popIn .5s cubic-bezier(.34,1.56,.64,1) both .15s;
+    }
+    @keyframes popIn { from{transform:scale(0)}to{transform:scale(1)} }
+    @keyframes fadeUp { from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)} }
+    .s-bar { width: 100%; height: 4px; background: var(--border); border-radius: 4px; overflow: hidden; margin-top: 1.5rem; }
+    .s-fill { height: 100%; background: var(--green); border-radius: 4px; width: 0; transition: width 2s linear; }
+
+    /* ── FORM HEADER ────────────────────────────── */
+    .form-title { font-size: 1.7rem; font-weight: 800; color: var(--white); margin-bottom: .3rem; }
+    .form-sub   { font-size: .83rem; color: var(--muted); margin-bottom: 2.25rem; }
+
+    /* ── FIELDS ─────────────────────────────────── */
+    .field { margin-bottom: 1.15rem; }
+    .f-label {
+      display: block; font-size: .7rem; font-weight: 700;
+      letter-spacing: .1em; text-transform: uppercase;
+      color: var(--muted); margin-bottom: .45rem;
+    }
+    .f-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: .45rem; }
+    .f-wrap { position: relative; }
+    .f-icon {
+      position: absolute; left: 1rem; top: 50%; transform: translateY(-50%);
+      color: var(--muted); font-size: .95rem; pointer-events: none;
+      transition: color .2s;
+    }
+    .f-eye {
+      position: absolute; right: 1rem; top: 50%; transform: translateY(-50%);
+      background: none; border: none; color: var(--muted); cursor: pointer;
+      font-size: .95rem; padding: 0; transition: color .2s;
+    }
+    .f-eye:hover { color: var(--white); }
+    .qf-input {
+      width: 100%;
+      background: var(--navy-mid);
+      border: 1.5px solid var(--border);
+      border-radius: 13px;
+      padding: .9rem 1rem .9rem 2.75rem;
+      color: var(--white);
+      font-family: 'Sora', sans-serif; font-size: .88rem;
+      outline: none;
+      transition: border-color .2s, box-shadow .2s;
+    }
+    .qf-input:focus {
+      border-color: var(--orange);
+      box-shadow: 0 0 0 3px var(--orange-soft);
+    }
+    .qf-input:focus ~ .f-icon { color: var(--orange); }
+    .f-wrap:focus-within .f-icon { color: var(--orange); }
+    .qf-input::placeholder { color: var(--muted); }
+    .qf-input.pad-r { padding-right: 3rem; }
+    .qf-input.err { border-color: var(--red); box-shadow: 0 0 0 3px #FF4D6A1A; }
+    .err-msg { font-size: .71rem; color: var(--red); margin-top: .35rem; display: none; }
+    .err-msg.on { display: block; }
+
+    /* ── REMEMBER ───────────────────────────────── */
+    .check-wrap { display: flex; align-items: center; gap: .6rem; cursor: pointer; }
+    .qf-check {
+      width: 18px; height: 18px; border-radius: 5px; flex-shrink: 0;
+      background: var(--navy-mid); border: 1.5px solid var(--border);
+      appearance: none; cursor: pointer; transition: all .2s;
+    }
+    .qf-check:checked { background: var(--orange); border-color: var(--orange); }
+    .qf-check:checked::after { content:'✓'; display:block; text-align:center; font-size:.7rem; color:#fff; line-height:16px; }
+    .check-txt { font-size: .78rem; color: var(--muted); }
+
+    /* ── FORGOT ─────────────────────────────────── */
+    .forgot-link { font-size: .75rem; color: var(--muted); text-decoration: none; transition: color .2s; }
+    .forgot-link:hover { color: var(--orange); }
+
+    /* ── FORGOT BOX ─────────────────────────────── */
+    .forgot-box {
+      display: none; margin-top: 1.1rem;
+      background: var(--navy-mid); border: 1px solid var(--border);
+      border-radius: 14px; padding: 1.25rem;
+      animation: fadeUp .3s ease both;
+    }
+    .forgot-box.open { display: block; }
+    .forgot-title { font-size: .82rem; font-weight: 700; color: var(--white); margin-bottom: .7rem; }
+
+    /* ── SUBMIT BUTTON ──────────────────────────── */
+    .btn-submit {
+      width: 100%;
+      background: linear-gradient(135deg, var(--orange), #FF9F5B);
+      border: none; border-radius: 14px; padding: 1rem;
+      color: #fff; font-family: 'Sora', sans-serif; font-weight: 800; font-size: .95rem;
+      cursor: pointer; margin-top: .25rem;
+      display: flex; align-items: center; justify-content: center; gap: .5rem;
+      transition: transform .2s, box-shadow .2s;
+      box-shadow: 0 4px 22px var(--orange-glow);
+    }
+    .btn-submit:hover   { transform: translateY(-2px); box-shadow: 0 8px 30px #FF6B2B55; }
+    .btn-submit:active  { transform: translateY(0); }
+    .btn-submit:disabled { opacity: .6; cursor: not-allowed; transform: none; }
+    .btn-sm { padding: .72rem; font-size: .83rem; margin-top: 0; }
+
+    /* ── SPINNER ────────────────────────────────── */
+    .spin {
+      width: 18px; height: 18px;
+      border: 2.5px solid #ffffff44; border-top-color: #fff;
+      border-radius: 50%; animation: rot .7s linear infinite; display: none;
+    }
+    @keyframes rot { to { transform: rotate(360deg); } }
+
+    /* ── REGISTER LINK ──────────────────────────── */
+    .register-link {
+      text-align: center; margin-top: 1.75rem;
+      font-size: .8rem; color: var(--muted);
+    }
+    .register-link a { color: var(--orange); font-weight: 700; text-decoration: none; }
+    .register-link a:hover { text-decoration: underline; }
+
+    /* ── RESPONSIVE ─────────────────────────────── */
+    @media (max-width: 900px) {
+      .split-left  { display: none; }
+      .split-right { width: 100%; padding: 2.5rem 1.75rem; }
+      body { overflow-y: auto; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- BG -->
+<div class="bg-layer">
+  <div class="orb orb1"></div>
+  <div class="orb orb2"></div>
+  <div class="orb orb3"></div>
+</div>
+<div class="bg-grid"></div>
+
+<!-- LEFT -->
+<div class="split-left">
+  <a href="#" class="brand">
+    <div class="brand-icon"><i class="bi bi-layers-fill"></i></div>
+    QueueFlow
+  </a>
+
+  <p class="eyebrow">Gestion des files d'attente</p>
+  <h1 class="hero-title">
+    Bienvenue<br>sur <span class="accent">QueueFlow</span>
+  </h1>
+  <p class="hero-sub">
+    La plateforme web qui digitalise vos files d'attente
+  </p>
+
+
+  <div class="stats-row">
+    <div class="stat-item">
+      <div class="stat-val" style="color:var(--orange)" id="cntT">1 247</div>
+      <div class="stat-lbl">Tickets / jour</div>
+    </div>
+    <div class="vr"></div>
+    <div class="stat-item">
+      <div class="stat-val" style="color:var(--green)">89%</div>
+      <div class="stat-lbl">Taux traité</div>
+    </div>
+    <div class="vr"></div>
+    <div class="stat-item">
+      <div class="stat-val" style="color:var(--white)">8<span style="font-size:1rem">min</span></div>
+      <div class="stat-lbl">Temps moyen</div>
+    </div>
+  </div>
+</div>
+
+<!-- RIGHT -->
+<div class="split-right">
+  <div class="form-wrap">
+
+    <!-- SUCCESS -->
+    <div class="success-overlay" id="successBox">
+      <div class="s-ring">✓</div>
+      <h2 style="font-size:1.4rem;font-weight:800;color:var(--white);margin-bottom:.4rem">Connexion réussie !</h2>
+      <p style="font-size:.85rem;color:var(--muted)">Redirection vers votre espace en cours…</p>
+      <div class="s-bar"><div class="s-fill" id="sBar"></div></div>
+    </div>
+
+    <!-- HEADER -->
+    <h2 class="form-title">Content de vous revoir 👋</h2>
+    <p class="form-sub">Connectez-vous à votre compte QueueFlow</p>
+
+    <!-- EMAIL -->
+    <div class="field">
+      <label class="f-label">Adresse email</label>
+      <div class="f-wrap">
+        <input class="qf-input" type="email" id="email" placeholder="votre@email.com" oninput="clr('email')" />
+        <i class="bi bi-envelope f-icon"></i>
+      </div>
+      <div class="err-msg" id="e-email">Veuillez entrer un email valide.</div>
+    </div>
+
+    <!-- PASSWORD -->
+    <div class="field">
+      <div class="f-row">
+        <label class="f-label" style="margin-bottom:0">Mot de passe</label>
+        <a href="#" class="forgot-link" onclick="toggleForgot(event)">Mot de passe oublié ?</a>
+      </div>
+      <div class="f-wrap">
+        <input class="qf-input pad-r" type="password" id="pwd" placeholder="••••••••" oninput="clr('pwd')" />
+        <i class="bi bi-lock f-icon"></i>
+        <button class="f-eye" onclick="toggleEye('pwd',this)" type="button"><i class="bi bi-eye-slash"></i></button>
+      </div>
+      <div class="err-msg" id="e-pwd">Mot de passe incorrect.</div>
+    </div>
+
+    <!-- REMEMBER -->
+    <div class="field d-flex align-items-center justify-content-between">
+      <label class="check-wrap">
+        <input type="checkbox" class="qf-check" />
+        <span class="check-txt">Se souvenir de moi</span>
+      </label>
+    </div>
+
+    <!-- SUBMIT -->
+    <button class="btn-submit" id="btnLogin" onclick="doLogin()">
+      <span id="loginTxt"><i class="bi bi-box-arrow-in-right me-1"></i>Se connecter</span>
+      <div class="spin" id="loginSpin"></div>
+    </button>
+
+    <!-- FORGOT BOX -->
+    <div class="forgot-box" id="forgotBox">
+      <div class="forgot-title"><i class="bi bi-envelope-fill me-1" style="color:var(--orange)"></i>Réinitialiser le mot de passe</div>
+      <div class="f-wrap mb-2">
+        <input class="qf-input" type="email" id="resetEmail" placeholder="Entrez votre email" />
+        <i class="bi bi-envelope f-icon"></i>
+      </div>
+      <button class="btn-submit btn-sm" onclick="sendReset()">Envoyer le lien</button>
+    </div>
+
+    <!-- REGISTER LINK -->
+    <div class="register-link">
+      Pas encore de compte ? <a href="signup.html">Créer un compte</a>
+    </div>
+
+  </div><!-- /form-wrap -->
+
+  <p style="font-size:.7rem;color:var(--muted);text-align:center;margin-top:2.5rem">
+    © 2026 QueueFlow · Tous droits réservés
+  </p>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  function isEmail(v){ return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v); }
+
+  function showErr(id, msg){
+    document.getElementById(id)?.classList.add('err');
+    const e = document.getElementById('e-'+id);
+    if(e){ if(msg) e.textContent=msg; e.classList.add('on'); }
+  }
+  function clr(id){
+    document.getElementById(id)?.classList.remove('err');
+    document.getElementById('e-'+id)?.classList.remove('on');
+  }
+
+  function toggleEye(id, btn){
+    const inp = document.getElementById(id);
+    const ico = btn.querySelector('i');
+    inp.type = inp.type==='password' ? 'text' : 'password';
+    ico.className = inp.type==='password' ? 'bi bi-eye-slash' : 'bi bi-eye';
+  }
+
+  function toggleForgot(e){
+    e.preventDefault();
+    document.getElementById('forgotBox').classList.toggle('open');
+  }
+
+  function sendReset(){
+    const em = document.getElementById('resetEmail').value.trim();
+    if(!isEmail(em)){ document.getElementById('resetEmail').classList.add('err'); return; }
+    document.getElementById('forgotBox').classList.remove('open');
+    showSuccess();
+  }
+
+  function doLogin(){
+    const em  = document.getElementById('email').value.trim();
+    const pwd = document.getElementById('pwd').value;
+    let ok = true;
+    if(!isEmail(em)) { showErr('email'); ok=false; }
+    if(pwd.length<3) { showErr('pwd');   ok=false; }
+    if(!ok) return;
+    setLoad(true);
+    setTimeout(()=>{ setLoad(false); showSuccess(); }, 1800);
+  }
+
+  function setLoad(on){
+    document.getElementById('btnLogin').disabled = on;
+    document.getElementById('loginTxt').style.display = on?'none':'flex';
+    document.getElementById('loginSpin').style.display = on?'block':'none';
+  }
+
+  function showSuccess(){
+    const box = document.getElementById('successBox');
+    box.classList.add('show');
+    setTimeout(()=>{ document.getElementById('sBar').style.width='100%'; }, 60);
+  }
+
+  // live counter
+  let c=1247;
+  setInterval(()=>{ c+=Math.floor(Math.random()*3); document.getElementById('cntT').textContent=c.toLocaleString('fr-FR'); },3000);
+</script>
+</body>
+</html>
